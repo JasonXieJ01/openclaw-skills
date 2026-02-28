@@ -13,6 +13,16 @@ Ashley英语乐园内容生成 - Midjourney生图 + Suno生歌
 
 详见 [english-eden/SKILL.md](./english-eden/SKILL.md)
 
+### 📚 english-eden-web-v2
+稳健版 Web 流程（Suno Web + Midjourney Web），含重试、分批、异常处理和 Notion 自动回填策略。
+
+详见 [english-eden-web-v2/SKILL.md](./english-eden-web-v2/SKILL.md)
+
+### 📚 english-eden-discord-v2
+可切换 Discord 版流程（Suno Web + Midjourney Discord Bot），更适合批量和稳定追踪。
+
+详见 [english-eden-discord-v2/SKILL.md](./english-eden-discord-v2/SKILL.md)
+
 ---
 
 ## 如何使用
