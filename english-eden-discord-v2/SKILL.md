@@ -27,9 +27,12 @@ description: Ashley英语乐园内容生成（Discord版 Midjourney）。Use whe
 
 1. 从 Notion 拉取待处理任务（状态=素材收集）。
 2. Suno Web 生成音乐并等待完成。
-3. 回填 Notion “歌曲下载”：
-   - 优先 File Upload API 自动上传
-   - 失败则 external URL 降级
+3. 回填 Notion “歌曲”：
+   - 从 Suno 下载音频到本地临时文件
+   - 检测 MIME/容器格式（优先识别 mp3 / wav / m4a）
+   - 按正确后缀重命名（例如 `音频名称.mp3`）
+   - 使用 Notion File Upload API 上传二进制，并写入 `歌曲(files)` 字段
+   - 同时可选回填 `歌曲下载(url)` 作为备用链接
 4. Midjourney 走 Discord Bot：
    - 将 prompt 分批（每批 3 条）
    - 在 Discord 频道发送 `/imagine`（或等价 bot 交互）
@@ -48,6 +51,12 @@ description: Ashley英语乐园内容生成（Discord版 Midjourney）。Use whe
 - 每批 3 条，批次间等待 5 分钟
 - 单条失败重试 2 次
 - 整体失败率 >50% 时停止任务并标记失败
+
+## Audio normalization + upload rule
+
+- 下载后先检测真实格式，禁止直接用无后缀文件名回填。
+- 命名规则：`<音频名称>.<ext>`（ext 来自检测结果）。
+- 上传方式：`POST /v1/file_uploads` → `POST upload_url (multipart form-data file=@...)` → `PATCH page.properties.歌曲.files[{file_upload.id}]`。
 
 ## Notion write-back example (status)
 
