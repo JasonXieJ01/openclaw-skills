@@ -25,6 +25,77 @@ description: Ashley英语乐园全流程生产（Notion + Suno + Midjourney Disc
 - 阶段4：MJ视频生成（3条/组，默认5分钟，支持动态提前）
 - 阶段5：下载归档与最终交付
 
+## Phase contracts (input/output + transition)
+
+Use the following contract to force continuity and avoid stopping at phase boundaries.
+
+### Phase 1 contract
+- Input: Notion DB query filter `状态=素材收集`
+- Output (required): `task_page_id`, `title`, `audio_name`, `prompt_count`, `prompts[]`
+- Done criteria: required fields complete and `prompt_count==12`
+- On done: immediately start Phase 2 (no user confirmation needed)
+
+### Phase 2 contract
+- Input: `title`, `audio_name`, lyrics/style fields
+- Output (required): normalized audio file path (`<音频名称>.<ext>`), Notion `歌曲(files)` attached id/url
+- Done criteria: file extension valid + upload attached in Notion
+- On done: immediately start Phase 3
+
+### Phase 3 contract
+- Input: `prompts[]` (12)
+- Output (required): image job records for 12 prompts
+- Done criteria: every prompt has image result record
+- On done: immediately start Phase 4
+
+### Phase 4 contract
+- Input: image job records
+- Output (required): video job records for 12 prompts
+- Done criteria: every prompt has 1 selected image + 1 video result
+- On done: immediately start Phase 5
+
+### Phase 5 contract
+- Input: video/audio artifacts
+- Output (required): `output/<音频名称>/` final archive manifest
+- Done criteria: 12 videos + 1 audio OR explicit `download_blocked` checklist
+- On done: emit final delivery message once
+
+## Runtime message policy (fixed templates)
+
+Use these exact status types only:
+- `[阶段X 开始] ...`
+- `[阶段X 进行中] ...` (heartbeat every 10 min without phase switch)
+- `[阶段X 重试#N] <错误>，将在 <delay>s 后重试`
+- `[阶段X 等待人工] <你需要做什么>；完成后回复：继续阶段X`
+- `[阶段X 失败] <原因>；已写入 Notion 生成日志`
+- `[阶段X 完成] <关键产物>`
+
+Do not send generic “已处理/继续中” without phase tag.
+
+## Batch loop policy (Phase 3/4)
+
+For prompts[1..12], execute in fixed batches of 3:
+1. Submit items `(1-3)`, wait/check completion, mark batch done.
+2. Submit `(4-6)`, then `(7-9)`, then `(10-12)` with same logic.
+3. After each batch done, emit one progress message with counts.
+
+Pseudo-flow:
+```text
+for batch in chunk(prompts, 3):
+  for item in batch:
+    run item action
+    if retryable_error: retry(3, [30,60,120])
+    if human_required: pause
+  wait until batch done (or timeout->retry/fail)
+  emit progress (done/total)
+```
+
+## Timeout and recovery
+
+- Single action soft-timeout: 90s; hard-timeout: 180s.
+- Batch wait timeout: 8min (Phase3), 10min (Phase4).
+- Timeout handling: retry up to 3; on exhaust -> `failed`.
+- If run is externally interrupted/aborted, resume from last phase checkpoint in Notion `生成日志` and continue.
+
 ## Phase 1 — Notion intake
 
 执行：
