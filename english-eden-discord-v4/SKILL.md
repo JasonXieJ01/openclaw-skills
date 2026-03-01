@@ -11,6 +11,25 @@ description: Ashley英语乐园全流程生产（Notion + Suno + Midjourney Disc
 
 ## Hard rules
 
+## Hard Rule 0 — Repair mode (default ON)
+
+When execution stalls or repeats without visible progress, enter Repair Mode automatically.
+
+Repair Mode steps:
+1. Report latest tool error verbatim (time + error text).
+2. If error contains `browser failed: fields are required`, MUST switch to:
+   - `browser.snapshot(refs=aria)`
+   - then `browser.act` with complete `fields` payload (targetId/ref/fields explicit)
+   - avoid empty/incomplete browser calls
+3. For every action, output: `动作名 + 参数摘要 + 结果(成功/失败)`
+4. If same error repeats 2 times, stop retry loop and emit:
+   - `[阶段X 等待人工] <唯一一步人工操作>`
+5. Before phase5, forbid graceful exit text such as “已完成/我现在继续执行” without a real next action.
+
+Stall detector:
+- No browser-visible progress for 120s OR same status text repeated 2 times => trigger Repair Mode immediately.
+
+
 1. 强制状态机执行：每阶段只有 `pending -> running -> done/failed`。
 2. 强制进度播报：每阶段必须发送两条消息：
    - `[阶段X 开始] ...`
