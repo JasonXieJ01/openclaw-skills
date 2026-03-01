@@ -89,6 +89,23 @@ for batch in chunk(prompts, 3):
   emit progress (done/total)
 ```
 
+
+## Visibility and live-progress policy
+
+Before any browser-visible action, emit:
+- `[阶段X 进行中] 即将操作页面：<site/page>，动作：<action>`
+
+If no browser action occurs within 60s after a phase starts, emit one diagnostic status:
+- `[阶段X 进行中] 当前在执行非页面步骤：<notion/io/wait/retry>`
+
+If blocked longer than 90s, emit blocked reason explicitly:
+- `[阶段X 进行中] 页面未变化原因：<队列等待/风控限制/等待人工/隔离浏览器执行>`
+
+Browser targeting rule:
+1. 默认优先操作当前已连接的同一浏览器标签页（若可用）。
+2. 若切换到隔离浏览器执行，必须先提示：`[阶段X 进行中] 将在隔离浏览器执行，当前窗口不会实时变化`。
+3. 执行结束后，输出本阶段实际操作目标（主标签/隔离浏览器）。
+
 ## Timeout and recovery
 
 - Single action soft-timeout: 90s; hard-timeout: 180s.
