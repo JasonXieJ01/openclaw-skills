@@ -23,6 +23,11 @@ Ashley英语乐园内容生成 - Midjourney生图 + Suno生歌
 
 详见 [english-eden-discord-v2/SKILL.md](./english-eden-discord-v2/SKILL.md)
 
+### 📚 english-eden-discord-v3
+状态机版流程（严格阶段开始/完成汇报、单主页执行、下载能力分流、失败可审计）。
+
+详见 [english-eden-discord-v3/SKILL.md](./english-eden-discord-v3/SKILL.md)
+
 ---
 
 ## 如何使用
